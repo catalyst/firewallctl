@@ -13,7 +13,7 @@ usage: firewallctl [start|configure|confirm|status]
   <dd>For compatibility with init scripts. Immediately applies the firewall script and marks it as known-good.</dd>
 
   <dt>configure [timeout]</dt>
-  <dd>The main way to use <tt>firewallctl</tt>. Runs <em>status</em> then asks for confirmation. If confirmed, applies the changed firewall and starts the rollback timeout (defaults to 120 seconds if not specific).</dd>
+  <dd>The main way to use <tt>firewallctl</tt>. Runs <em>status</em> then asks for confirmation. If confirmed, applies the changed firewall and starts the rollback timeout (defaults to 120 seconds if not specified).</dd>
   
   <dt>confirm</dt>
   <dd>Once a configuration has been applied, it must be confirmed within <em>timeout</em> seconds using the <em>confirm</em> command, or the last known good firewall will be re-applied (and a log message will be printed to syslog to indicate this).</dd>
