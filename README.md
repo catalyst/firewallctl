@@ -10,7 +10,7 @@ usage: firewallctl [start|configure|confirm|status]
 
 <dl>
   <dt>start</dt>
-  <dd>For compatibility with init scripts. Immediately applies the firewall script and marks it as known-good. <strong>This bypasses the rollback timeout, so should not be used normally.</strong></dd>
+  <dd>For compatibility with init scripts. If there a last-known-good firewall, it will be applied immediately. If there isn't a known-good firewall firewallctl attempts to run the firewall script and then mark it as known-good. <strong>This bypasses the rollback timeout, so should not be used normally.</strong></dd>
 
   <dt>configure [timeout]</dt>
   <dd>The main way to use <tt>firewallctl</tt>. Runs <em>status</em> then asks for confirmation. If confirmed, applies the changed firewall and starts the rollback timeout (defaults to 120 seconds if not specified).</dd>
