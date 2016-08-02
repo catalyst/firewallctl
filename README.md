@@ -4,7 +4,7 @@ Safely deploy script based firewalls in Linux.
 ## Usage
 
 <pre>
-$ firewallctl 
+$ firewallctl
 usage: firewallctl [start|configure|confirm|status]
 </pre>
 
@@ -14,10 +14,13 @@ usage: firewallctl [start|configure|confirm|status]
 
   <dt>configure [timeout]</dt>
   <dd>The main way to use <tt>firewallctl</tt>. Runs <em>status</em> then asks for confirmation. If confirmed, applies the changed firewall and starts the rollback timeout (defaults to 120 seconds if not specified).</dd>
-  
+
   <dt>confirm</dt>
   <dd>Once a configuration has been applied, it must be confirmed within <em>timeout</em> seconds using the <em>confirm</em> command, or the last known good firewall will be re-applied (and a log message will be printed to syslog to indicate this).</dd>
-  
+
+  <dt>rollback</dt>
+  <dd>Immediately re-apply the last known good firewall and cancel the timeout.</dd>
+
   <dt>status</dt>
   <dd>Just output the current state of the firewall (e.g. whether a new firewall is waiting to be applied).</dd>
 </dl>
@@ -35,7 +38,7 @@ A new firewall is waiting to be deployed.
      echo "-A Demo -s 198.51.100.1 -j ACCEPT"
      echo "-A Demo -s 198.51.100.2 -j ACCEPT"
 +    echo "-A Demo -d 192.0.2.1 -j DROP"
-     # 
+     #
      # Next up we frobnicate some packets
      # As per change control #1234
 
@@ -56,7 +59,7 @@ A new firewall is waiting to be deployed.
      echo "-A Demo -s 198.51.100.1 -j ACCEPT"
      echo "-A Demo -s 198.51.100.2 -j ACCEPT"
 +    echo "-A Demo -d 192.0.2.1 -j DROP"
-     # 
+     #
      # Next up we frobnicate some packets
      # As per change control #1234
 

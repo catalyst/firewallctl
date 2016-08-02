@@ -39,8 +39,6 @@ function rollback_subprocess {
     if rmdir "$working_directory"; then
         $last_firewall
         logger "$(basename $0): rolled back firewall!"
-    else
-        cp "${firewall}" "${last_firewall}"
     fi
 }
 
@@ -54,7 +52,7 @@ function do_start {
         echo "error: no firewall script found" >&2
         exit 1
     fi
-}   
+}
 
 function do_configure {
     if do_status; then
@@ -86,6 +84,16 @@ function do_confirm {
     fi
 }
 
+function do_rollback {
+    if rmdir "$working_directory"; then
+        $last_firewall
+        logger "Rolled back to last known good firewall."
+    else
+        echo "error: unable to release lock, is there a pending confirmation?" >&2
+        exit 1
+    fi
+}
+
 function do_status {
     if [[ -d $working_directory ]]; then
         echo "New firewall has been applied, please confirm by running \`$(basename $0) confirm'."
@@ -110,7 +118,11 @@ function do_status {
     elif [[ $firewall -nt $last_firewall ]]; then
         echo "A new firewall is waiting to be deployed."
         echo ""
-        diff -u "${last_firewall}" "${firewall}"
+        colors=$(tput colors); if ((colors)); then
+            diff -u "${last_firewall}" "${firewall}" | sed 's/^-/\x1b[31m-/;s/^+/\x1b[32m+/;s/^@/\x1b[34m@/;s/$/\x1b[0m/'
+        else
+            diff -u "${last_firewall}" "${firewall}"
+        fi
         echo ""
         return 0
     else
@@ -129,11 +141,14 @@ case "$1" in
   confirm)
     do_confirm
     ;;
+  rollback)
+    do_rollback
+    ;;
   status)
     do_status
     ;;
   *)
-    echo "usage: $(basename $0) [start|configure|confirm|status]" >&2
+    echo "usage: $(basename $0) [start|configure|confirm|rollback|status]" >&2
     exit 3
     ;;
 esac
