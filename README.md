@@ -5,7 +5,7 @@ Safely deploy script based firewalls in Linux.
 
 <pre>
 $ firewallctl
-usage: firewallctl [start|configure|confirm|status]
+usage: firewallctl [start|configure|confirm|rollback|status]
 </pre>
 
 <dl>
