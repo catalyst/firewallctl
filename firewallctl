@@ -18,8 +18,8 @@
 # firewallctl. Safely deploy script based firewalls in Linux. Michael Fincham <michael.fincham@catalyst.net.nz>
 
 working_directory="/run/firewallctl"
-firewall="/etc/network/firewall"
-last_firewall="/etc/network/last-known-good-firewall"
+pending_firewall="/etc/network/pending-firewall"
+known_good_firewall="/etc/network/firewall"
 declare -i rollback_seconds
 rollback_seconds=$2
 
@@ -37,17 +37,14 @@ fi
 function rollback_subprocess {
     sleep $rollback_seconds
     if rmdir "$working_directory"; then
-        $last_firewall
+        $known_good_firewall
         logger "$(basename $0): rolled back firewall!"
     fi
 }
 
 function do_start {
-    if [[ -x $last_firewall ]]; then
-        $last_firewall
-    elif [[ -x $firewall ]]; then # first run, can't really rollback during boot so just make last = current
-        $firewall
-        cp "${firewall}" "${last_firewall}"
+    if [[ -x $known_good_firewall ]]; then
+        $known_good_firewall
     else
         echo "error: no firewall script found" >&2
         exit 1
@@ -63,7 +60,7 @@ function do_configure {
             if mkdir "$working_directory"; then
                 rollback_subprocess </dev/null >/dev/null 2>&1 &
                 disown
-                $firewall
+                $pending_firewall
                 echo ""
                 echo "Applied firewall. Use \`$(basename $0) confirm' within ${rollback_seconds} seconds to confirm."
             else
@@ -76,7 +73,7 @@ function do_configure {
 
 function do_confirm {
     if rmdir "$working_directory"; then
-        cp "${firewall}" "${last_firewall}"
+        cp "${pending_firewall}" "${known_good_firewall}"
         echo "Confirmed."
     else
         echo "error: unable to release lock, did you already confirm?" >&2
@@ -86,7 +83,7 @@ function do_confirm {
 
 function do_rollback {
     if rmdir "$working_directory"; then
-        $last_firewall
+        $known_good_firewall
         logger "Rolled back to last known good firewall."
     else
         echo "error: unable to release lock, is there a pending confirmation?" >&2
@@ -100,28 +97,28 @@ function do_status {
         return 1
     fi
 
-    if [[ ! -x $firewall ]]; then
-        echo "No firewall found."
+    if [[ ! -x $pending_firewall ]]; then
+        echo "No new firewall found."
         return 1
     fi
 
-    if [[ ! -x $last_firewall ]]; then
-        echo "The firewall ${firewall} has not yet been applied."
+    if [[ ! -x $known_good_firewall ]]; then
+        echo "The firewall ${pending_firewall} has not yet been applied."
         return 1
     fi
 
-    firewall_hash="$(sha256sum < $firewall)"
-    last_firewall_hash="$(sha256sum < $last_firewall)"
-    if [[ $firewall_hash = $last_firewall_hash ]]; then
+    pending_firewall_hash="$(sha256sum < $pending_firewall)"
+    known_good_firewall_hash="$(sha256sum < $known_good_firewall)"
+    if [[ $pending_firewall_hash = $known_good_firewall_hash ]]; then
         echo "Running firewall is up to date."
         return 1
-    elif [[ $firewall -nt $last_firewall ]]; then
+    elif [[ $pending_firewall -nt $known_good_firewall ]]; then
         echo "A new firewall is waiting to be deployed."
         echo ""
         colors=$(tput colors); if ((colors)); then
-            diff -u "${last_firewall}" "${firewall}" | sed 's/^-/\x1b[31m-/;s/^+/\x1b[32m+/;s/^@/\x1b[34m@/;s/$/\x1b[0m/'
+            diff -u "${known_good_firewall}" "${pending_firewall}" | sed 's/^-/\x1b[31m-/;s/^+/\x1b[32m+/;s/^@/\x1b[34m@/;s/$/\x1b[0m/'
         else
-            diff -u "${last_firewall}" "${firewall}"
+            diff -u "${known_good_firewall}" "${pending_firewall}"
         fi
         echo ""
         return 0
